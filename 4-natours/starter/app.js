@@ -1,7 +1,10 @@
 const express = require('express');
 const morgan = require('morgan');
+
 const favicon = require('serve-favicon');
 const path = require('path');
+const globalErrorHandler = require('./controllers/errorController');
+const AppError = require('./utils/appError');
 
 // Require Rouiter Files
 const tourRouter = require('./routes/tourRoutes');
@@ -27,22 +30,19 @@ app.use((req, res, next) => {
   next();
 });
 
-// 2) Route Handlers
-
-// to make parameters optional, add question mark at the end of it like this: /:y?
-
-// app.get('/api/v1/tours', getAllTours);
-// app.post('/api/v1/tours', createTour);
-// app.get('/api/v1/tours/:id', getTour);
-// app.patch('/api/v1/tours/:id', updateTour);
-// app.delete('/api/v1/tours/:id', deleteTour);
-
-// or, with a different and prettier syntax:
-
 // 3) Routes (using mounted routers through middleware declarations)
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 
-// 4) Start Server
+app.all('*', (req, res, next) => {
+  // const err = new Error(`Can't find ${req.originalUrl} on this server!`);
+  // err.status = 'fail';
+  // err.statusCode = 404;
+
+  next(new AppError(`Can't find ${req.originalUrl} on this server!`));
+});
+
+// ERROR HANDLING
+app.use(globalErrorHandler);
 
 module.exports = app;
