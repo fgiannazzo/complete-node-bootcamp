@@ -14,6 +14,7 @@ const AppError = require('./utils/appError');
 // Require Rouiter Files
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
+const reviewRouter = require('./routes/reviewRoutes');
 
 // 1) GLOBAL MIDDLEWARES
 
@@ -72,6 +73,7 @@ app.use((req, res, next) => {
 // 3) Routes (using mounted routers through middleware declarations)
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
+app.use('/api/v1/reviews', reviewRouter);
 
 app.all('*', (req, res, next) => {
   // const err = new Error(`Can't find ${req.originalUrl} on this server!`);
