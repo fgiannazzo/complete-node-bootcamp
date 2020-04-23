@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
+const cookieParser = require('cookie-parser');
 
 const favicon = require('serve-favicon');
 const path = require('path');
@@ -12,6 +13,7 @@ const globalErrorHandler = require('./controllers/errorController');
 const AppError = require('./utils/appError');
 
 // Require Rouiter Files
+const viewRouter = require('./routes/viewRoutes');
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 const reviewRouter = require('./routes/reviewRoutes');
@@ -19,6 +21,13 @@ const reviewRouter = require('./routes/reviewRoutes');
 // 1) GLOBAL MIDDLEWARES
 
 const app = express();
+
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views'));
+
+// SERVE STATIC FILES
+app.use(express.static(path.join(__dirname, 'public')));
+
 // SET SECURITY HTTP HEADERS
 app.use(helmet());
 
@@ -40,6 +49,7 @@ app.use('/api', limiter);
 
 // READ DATA FROM BODY AND LIMIT IT TO 10KB TO PREVENT ATTACKS
 app.use(express.json({ limit: '10kb' }));
+app.use(cookieParser());
 
 // SANITIZE DATA AGAINST NOSQL INJECTION
 app.use(mongoSanitize());
@@ -61,16 +71,16 @@ app.use(
   })
 );
 
-// SERVE STATIC FILES
-app.use(express.static(`${__dirname}/public`));
-
 // TEST MIDDLEWARE
 app.use((req, res, next) => {
   req.requestTime = new Date().toISOString();
+  // console.log(req.cookies);
   next();
 });
 
 // 3) Routes (using mounted routers through middleware declarations)
+
+app.use('/', viewRouter);
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/reviews', reviewRouter);

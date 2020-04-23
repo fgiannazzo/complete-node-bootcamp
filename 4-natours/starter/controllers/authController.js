@@ -18,7 +18,8 @@ const createSendToken = (user, statusCode, res) => {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
     ),
-    secure: true,
+    // THIS SHOULD BE ENABLED TO SECURE THE TOKEN, BUT HTTPS NEEDS TO BE ENABLED FOR IT TO WORK WITH MOST BROWSERS / CLIENTS
+    // secure: true,
     httpOnly: true
   };
   if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
@@ -73,6 +74,8 @@ exports.protect = catchAsync(async (req, res, next) => {
     req.headers.authorization.startsWith('Bearer')
   ) {
     token = req.headers.authorization.split(' ')[1];
+  } else if (req.cookies.jwt) {
+    token = req.cookies.jwt;
   }
 
   if (!token) {
@@ -103,6 +106,25 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   // GRANT ACCESS
   req.user = currentUser;
+  next();
+});
+
+exports.isLoggedIn = catchAsync(async (req, res, next) => {
+  if (req.cookies.jwt) {
+    const decoded = await promisify(jwt.verify)(
+      req.cookies.jwt,
+      process.env.JWT_SECRET
+    );
+    const currentUser = await User.findById(decoded.id);
+    if (!currentUser) {
+      return next();
+    }
+    if (currentUser.changedPasswordAfter(decoded.iat)) {
+      return next();
+    }
+    res.locals.user = currentUser;
+    return next();
+  }
   next();
 });
 
